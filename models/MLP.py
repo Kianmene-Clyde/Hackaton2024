@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
-from sklearn.metrics import f1_score, confusion_matrix
 
 
 class MLP:
@@ -42,13 +41,13 @@ class MLP:
 
         # Compilation
         optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+        metrics = ['accuracy'] if self.is_classification else []
+        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         return model
 
     def fit(self, training_inputs, training_labels, test_inputs=None, test_labels=None, logdir=None):
         """
-        Entraîne le modèle et affiche les métriques F1-score et matrice de confusion.
-        Logue train_accuracy, test_accuracy, train_loss, test_loss dans TensorBoard.
+        Entraîne le modèle et affiche les métriques.
         """
         # Convertir les données en tenseurs
         training_inputs = tf.convert_to_tensor(training_inputs, dtype=tf.float32)
@@ -89,25 +88,6 @@ class MLP:
             print("\n### Évaluation sur l'ensemble de test ###")
             self._evaluate_metrics(test_inputs, test_labels)
 
-        # Sauvegarder les métriques pour TensorBoard
-        if logdir:
-            self._log_metrics_to_tensorboard(history, logdir)
-
-    def _log_metrics_to_tensorboard(self, history, logdir):
-        """
-        Enregistre les métriques de l'historique dans TensorBoard.
-        """
-        writer = tf.summary.create_file_writer(logdir)
-        with writer.as_default():
-            for epoch, (train_loss, train_acc, val_loss, val_acc) in enumerate(zip(
-                    history.history['loss'], history.history['accuracy'],
-                    history.history['val_loss'], history.history['val_accuracy']
-            )):
-                tf.summary.scalar('train_loss', train_loss, step=epoch)
-                tf.summary.scalar('train_accuracy', train_acc, step=epoch)
-                tf.summary.scalar('test_loss', val_loss, step=epoch)
-                tf.summary.scalar('test_accuracy', val_acc, step=epoch)
-
     def _evaluate_metrics(self, inputs, labels):
         """
         Évalue les métriques : F1-score et matrice de confusion.
@@ -116,11 +96,33 @@ class MLP:
         predictions = self.predict(inputs)
 
         if self.is_classification:
-            f1 = f1_score(labels, predictions, average='weighted')
-            cm = confusion_matrix(labels, predictions)
+            # Calcul du F1-score (Keras)
+            f1 = self._compute_f1(labels, predictions)
             print(f"F1-Score : {f1:.4f}")
+
+            # Calcul de la matrice de confusion (TensorFlow)
+            cm = tf.math.confusion_matrix(labels, predictions)
             print("Matrice de confusion :")
-            print(cm)
+            print(cm.numpy())
+
+    def _compute_f1(self, labels, predictions):
+        """
+        Calcul du F1-score à l'aide de TensorFlow/Keras.
+        """
+        labels = tf.convert_to_tensor(labels, dtype=tf.int32)
+        predictions = tf.convert_to_tensor(predictions, dtype=tf.int32)
+
+        precision = tf.keras.metrics.Precision()
+        recall = tf.keras.metrics.Recall()
+
+        precision.update_state(labels, predictions)
+        recall.update_state(labels, predictions)
+
+        p = precision.result().numpy()
+        r = recall.result().numpy()
+
+        f1 = 2 * (p * r) / (p + r + 1e-7)  # Évite une division par zéro
+        return f1
 
     def predict(self, input):
         """

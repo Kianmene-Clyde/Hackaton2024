@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models, optimizers
 import numpy as np
-from sklearn.metrics import f1_score, confusion_matrix
 
 
 class SVM:
@@ -79,14 +78,33 @@ class SVM:
         accuracy = np.mean(predictions == labels)
 
         if log:
-            f1 = f1_score(labels, predictions, average="weighted")
-            cm = confusion_matrix(labels, predictions)
+            f1 = self._compute_f1(labels, predictions)
+            cm = tf.math.confusion_matrix(labels, predictions)
             print(f"\n### {dataset_name} Metrics ###")
             print(f"Loss: {loss:.4f}, Accuracy: {accuracy:.4f}")
             print(f"F1-Score: {f1:.4f}")
             print("Confusion Matrix:")
-            print(cm)
+            print(cm.numpy())
         return loss, accuracy
+
+    def _compute_f1(self, labels, predictions):
+        """
+        Calcul du F1-score à l'aide de TensorFlow/Keras.
+        """
+        labels = tf.convert_to_tensor(labels, dtype=tf.int32)
+        predictions = tf.convert_to_tensor(predictions, dtype=tf.int32)
+
+        precision = tf.keras.metrics.Precision()
+        recall = tf.keras.metrics.Recall()
+
+        precision.update_state(labels, predictions)
+        recall.update_state(labels, predictions)
+
+        p = precision.result().numpy()
+        r = recall.result().numpy()
+
+        f1 = 2 * (p * r) / (p + r + 1e-7)  # Évite une division par zéro
+        return f1
 
     def predict(self, inputs):
         """
