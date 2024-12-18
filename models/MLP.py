@@ -56,9 +56,7 @@ class MLP:
         # Callbacks (TensorBoard)
         callbacks = []
         if logdir:
-            tensorboard_callback = tf.keras.callbacks.TensorBoard(
-                log_dir=logdir, histogram_freq=1, write_graph=True, write_images=True
-            )
+            tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir, write_graph=True)
             callbacks.append(tensorboard_callback)
 
         # Conversion des labels pour classification

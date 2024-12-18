@@ -83,8 +83,8 @@ if __name__ == '__main__':
 
         print(f"FINAL PREDICTION \n {mlp.predict(val_inputs)}")
 
-        # Évaluation sur les données de test
-        print("\nÉvaluation finale sur le jeu de test :")
+        # Évaluation sur les données de Validation
+        print("\nÉvaluation finale sur le jeu de Validation :")
         mlp._evaluate_metrics(val_inputs, val_labels)
 
         """END OF MLP"""
@@ -109,8 +109,8 @@ if __name__ == '__main__':
     predictions = svm.predict(val_inputs)
     print(f"FINAL PREDICTION {predictions}")
 
-    # Évaluation sur les données de test
-    print("\nÉvaluation finale sur le jeu de test :")
+    # Évaluation sur les données de Validation
+    print("\nÉvaluation finale sur le jeu de Validation :")
     svm.evaluate_metrics(val_inputs, val_labels)
 
     """END OF SVM"""

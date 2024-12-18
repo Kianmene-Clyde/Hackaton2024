@@ -45,19 +45,13 @@ class SVM:
         # Callbacks pour TensorBoard
         callbacks = []
         if logdir:
-            tensorboard_callback = tf.keras.callbacks.TensorBoard(
-                log_dir=logdir, histogram_freq=1, write_graph=True, write_images=True
-            )
+            tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir, write_graph=True)
             callbacks.append(tensorboard_callback)
 
         # Entraînement
-        history = self.model.fit(
-            training_inputs, training_labels_cat,
-            validation_data=validation_data,
-            epochs=self.epochs,
-            batch_size=self.batch_size,
-            callbacks=callbacks
-        )
+        history = self.model.fit(training_inputs, training_labels_cat, validation_data=validation_data,
+                                 epochs=self.epochs, batch_size=self.batch_size, callbacks=callbacks)
+
         print("Training Finished.")
 
         # Affichage des métriques finales
@@ -65,7 +59,7 @@ class SVM:
         if test_inputs is not None and test_labels is not None:
             self.evaluate_metrics(test_inputs, test_labels, "Test")
 
-    def evaluate_metrics(self, inputs, labels, dataset_name="", log=True):
+    def evaluate_metrics(self, inputs, labels):
         """
         Évaluation complète : calcul de la perte, F1-score et matrice de confusion.
         """
@@ -77,52 +71,55 @@ class SVM:
         predictions = np.argmax(logits, axis=1)
         accuracy = np.mean(predictions == labels)
 
-        if log:
-            f1 = self._compute_f1(labels, predictions)
-            cm = tf.math.confusion_matrix(labels, predictions)
-            print(f"\n### {dataset_name} Metrics ###")
-            print(f"Loss: {loss:.4f}, Accuracy: {accuracy:.4f}")
-            print(f"F1-Score: {f1:.4f}")
-            print("Confusion Matrix:")
-            print(cm.numpy())
+        f1 = self._compute_f1(labels, predictions)
+        cm = tf.math.confusion_matrix(labels, predictions)
+        print(f"Loss: {loss:.4f}, Accuracy: {accuracy:.4f}")
+        print(f"F1-Score: {f1:.4f}")
+        print("Confusion Matrix:")
+        print(cm.numpy())
+
         return loss, accuracy
 
-    def _compute_f1(self, labels, predictions):
-        """
-        Calcul du F1-score à l'aide de TensorFlow/Keras.
-        """
-        labels = tf.convert_to_tensor(labels, dtype=tf.int32)
-        predictions = tf.convert_to_tensor(predictions, dtype=tf.int32)
 
-        precision = tf.keras.metrics.Precision()
-        recall = tf.keras.metrics.Recall()
+def _compute_f1(self, labels, predictions):
+    """
+    Calcul du F1-score à l'aide de TensorFlow/Keras.
+    """
+    labels = tf.convert_to_tensor(labels, dtype=tf.int32)
+    predictions = tf.convert_to_tensor(predictions, dtype=tf.int32)
 
-        precision.update_state(labels, predictions)
-        recall.update_state(labels, predictions)
+    precision = tf.keras.metrics.Precision()
+    recall = tf.keras.metrics.Recall()
 
-        p = precision.result().numpy()
-        r = recall.result().numpy()
+    precision.update_state(labels, predictions)
+    recall.update_state(labels, predictions)
 
-        f1 = 2 * (p * r) / (p + r + 1e-7)  # Évite une division par zéro
-        return f1
+    p = precision.result().numpy()
+    r = recall.result().numpy()
 
-    def predict(self, inputs):
-        """
-        Prédiction des labels.
-        """
-        logits = self.model(inputs, training=False)
-        return np.argmax(logits, axis=1)
+    f1 = 2 * (p * r) / (p + r + 1e-7)  # Évite une division par zéro
+    return f1
 
-    def save_model(self, filename):
-        """
-        Sauvegarde complète du modèle.
-        """
-        self.model.save(filename)
-        print(f"Modèle sauvegardé sous : {filename}")
 
-    def load_model(self, filename):
-        """
-        Chargement du modèle sauvegardé.
-        """
-        self.model = tf.keras.models.load_model(filename)
-        print(f"Modèle chargé depuis : {filename}")
+def predict(self, inputs):
+    """
+    Prédiction des labels.
+    """
+    logits = self.model(inputs, training=False)
+    return np.argmax(logits, axis=1)
+
+
+def save_model(self, filename):
+    """
+    Sauvegarde complète du modèle.
+    """
+    self.model.save(filename)
+    print(f"Modèle sauvegardé sous : {filename}")
+
+
+def load_model(self, filename):
+    """
+    Chargement du modèle sauvegardé.
+    """
+    self.model = tf.keras.models.load_model(filename)
+    print(f"Modèle chargé depuis : {filename}")
