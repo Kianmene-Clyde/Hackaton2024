@@ -64,53 +64,53 @@ if __name__ == '__main__':
         # Fixer la seed pour garantir la reproductibilité
         tf.keras.utils.set_random_seed(seed)
 
-        """MLP"""
-
-        # Initialisation du MLP
-        mlp = MLP(structure=[train_inputs.shape[1], 32, 16, num_classes], learning_rate=0.01, epochs=5,
-                  is_classification=True, hidden_activation="relu")
-
-        # Chemin pour TensorBoard logs
-        experiment_name = f"seed_{seed}_structure_{mlp.structure}_LR_{mlp.learning_rate}_epochs_{mlp.epochs}_hidden_activation_{mlp.hidden_activation}"
-        final_logdir = os.path.join(base_logdir, "MLP", experiment_name)
+        """SVM"""
 
         # Entraînement
-        mlp.fit(train_inputs, train_labels, test_inputs=test_inputs, test_labels=test_labels, logdir=final_logdir)
+        svm = SVM(learning_rate=0.001, lambda_param=0.01, num_classes=num_classes, epochs=5)
+        # Chemin pour TensorBoard logs
+        experiment_name = f"seed_{seed}_LR_{svm.learning_rate}_epochs_{svm.epochs}_lambda_{svm.lambda_param}"
+        final_logdir = os.path.join(base_logdir, "SVM", experiment_name)
+
+        svm.fit(train_inputs, train_labels, test_inputs, test_labels, logdir=final_logdir)
 
         # Sauvegarde et chargement du modèle
-        mlp.save_model("../model_parameters/MLP/mlp_model1.keras")
-        mlp.load_model("../model_parameters/MLP/mlp_model1.keras")
+        svm.save_model("../model_parameters/SVM/svm_model1.keras")
+        svm.load_model("../model_parameters/SVM/svm_model1.keras")
 
-        print(f"FINAL PREDICTION \n {mlp.predict(val_inputs)}")
+        # Prédictions
+        predictions = svm.predict(val_inputs)
+        print(f"FINAL PREDICTION {predictions}")
 
         # Évaluation sur les données de Validation
         print("\nÉvaluation finale sur le jeu de Validation :")
-        mlp._evaluate_metrics(val_inputs, val_labels)
+        svm.evaluate_metrics(val_inputs, val_labels)
 
-        """END OF MLP"""
+        """END OF SVM"""
 
     exit(0)
 
-    """SVM"""
+    """MLP"""
+
+    # Initialisation du MLP
+    mlp = MLP(structure=[train_inputs.shape[1], 32, 16, num_classes], learning_rate=0.01, epochs=5,
+              is_classification=True, hidden_activation="relu")
+
+    # Chemin pour TensorBoard logs
+    experiment_name = f"seed_{seed}_structure_{mlp.structure}_LR_{mlp.learning_rate}_epochs_{mlp.epochs}_hidden_activation_{mlp.hidden_activation}"
+    final_logdir = os.path.join(base_logdir, "MLP", experiment_name)
 
     # Entraînement
-    svm = SVM(learning_rate=0.001, lambda_param=0.01, num_classes=num_classes, epochs=5)
-    # Chemin pour TensorBoard logs
-    experiment_name = f"seed_{seed}_LR_{svm.learning_rate}_epochs_{svm.epochs}_lambda_{svm.lambda_param}"
-    final_logdir = os.path.join(base_logdir, "SVM", experiment_name)
-
-    svm.fit(train_inputs, train_labels, test_inputs, test_labels, logdir=final_logdir)
+    mlp.fit(train_inputs, train_labels, test_inputs=test_inputs, test_labels=test_labels, logdir=final_logdir)
 
     # Sauvegarde et chargement du modèle
-    svm.save_model("../model_parameters/SVM/svm_model1.keras")
-    svm.load_model("../model_parameters/SVM/svm_model1.keras")
+    mlp.save_model("../model_parameters/MLP/mlp_model1.keras")
+    mlp.load_model("../model_parameters/MLP/mlp_model1.keras")
 
-    # Prédictions
-    predictions = svm.predict(val_inputs)
-    print(f"FINAL PREDICTION {predictions}")
+    print(f"FINAL PREDICTION \n {mlp.predict(val_inputs)}")
 
     # Évaluation sur les données de Validation
     print("\nÉvaluation finale sur le jeu de Validation :")
-    svm.evaluate_metrics(val_inputs, val_labels)
+    mlp._evaluate_metrics(val_inputs, val_labels)
 
-    """END OF SVM"""
+    """END OF MLP"""

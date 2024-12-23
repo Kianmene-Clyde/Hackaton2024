@@ -70,7 +70,7 @@ class MLP:
             test_labels_cat = test_labels
 
         # Entraînement
-        history = self.model.fit(
+        k = self.model.fit(
             training_inputs, training_labels_cat,
             validation_data=(test_inputs, test_labels_cat) if test_inputs is not None else None,
             epochs=self.epochs, batch_size=32, callbacks=callbacks
